@@ -34,31 +34,31 @@ class Ball:
         rotated_position = rotation_matrix.dot(self.position - camera_position)
         z = rotated_position[2]
 
-        if z < -self.radius:  # The ball is entirely behind the photo plate
+        # If the ball is entirely behind the plane, return None
+        if z < -self.radius:
             return None
 
-        # Project left, right, top and bottom extremes
-        rotated_left = rotation_matrix.dot((self.position - np.array([self.radius, 0, 0])) - camera_position)
-        rotated_right = rotation_matrix.dot((self.position + np.array([self.radius, 0, 0])) - camera_position)
-        rotated_top = rotation_matrix.dot((self.position + np.array([0, self.radius, 0])) - camera_position)
-        rotated_bottom = rotation_matrix.dot((self.position - np.array([0, self.radius, 0])) - camera_position)
+        # Compute the intersection point (or the center of the ball if it does not intersect the plane)
+        if z >= self.radius:
+            # If the ball is in front of the plane
+            intersection_point = rotated_position
+            r = self.radius
+        else:
+            # If the ball intersects the plane
+            d = z
+            intersection_point = rotated_position + d * camera_direction
+            r = np.sqrt(self.radius ** 2 - d ** 2)
 
-        projected_left = (focal_length * rotated_left[0] / rotated_left[2] if rotated_left[2] != 0 else rotated_left[
-            0]) + WIDTH // 2
-        projected_right = (focal_length * rotated_right[0] / rotated_right[2] if rotated_right[2] != 0 else
-                           rotated_right[0]) + WIDTH // 2
-        projected_top = (focal_length * rotated_top[1] / rotated_top[2] if rotated_top[2] != 0 else rotated_top[
-            1]) + HEIGHT // 2
-        projected_bottom = (focal_length * rotated_bottom[1] / rotated_bottom[2] if rotated_bottom[2] != 0 else
-                            rotated_bottom[1]) + HEIGHT // 2
+        # Project the circle cross-section to the plane
+        projected_radius_x = focal_length * r / abs(intersection_point[2]) if intersection_point[2] != 0 else r
+        projected_radius_y = focal_length * r / abs(intersection_point[2]) if intersection_point[2] != 0 else r
 
-        # Calculate width and height of the ellipse
-        width = abs(projected_right - projected_left)
-        height = abs(projected_bottom - projected_top)
+        xp = (focal_length * intersection_point[0] / abs(intersection_point[2]) if intersection_point[2] != 0 else
+              intersection_point[0]) + WIDTH // 2
+        yp = (focal_length * intersection_point[1] / abs(intersection_point[2]) if intersection_point[2] != 0 else
+              intersection_point[1]) + HEIGHT // 2
 
-        projected_position = np.array([projected_left + width / 2, projected_top + height / 2], dtype=int)
-
-        return (*projected_position, width, height)
+        return (int(xp), int(yp), abs(projected_radius_x), abs(projected_radius_y))
 
 
 # Generate balls
