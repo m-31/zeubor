@@ -37,34 +37,28 @@ class Ball:
         if z < -self.radius:  # The ball is entirely behind the photo plate
             return None
 
-        # Project left and right extremes
+        # Project left, right, top and bottom extremes
         rotated_left = rotation_matrix.dot((self.position - np.array([self.radius, 0, 0])) - camera_position)
         rotated_right = rotation_matrix.dot((self.position + np.array([self.radius, 0, 0])) - camera_position)
+        rotated_top = rotation_matrix.dot((self.position + np.array([0, self.radius, 0])) - camera_position)
+        rotated_bottom = rotation_matrix.dot((self.position - np.array([0, self.radius, 0])) - camera_position)
+
         projected_left = (focal_length * rotated_left[0] / rotated_left[2] if rotated_left[2] != 0 else rotated_left[
             0]) + WIDTH // 2
         projected_right = (focal_length * rotated_right[0] / rotated_right[2] if rotated_right[2] != 0 else
                            rotated_right[0]) + WIDTH // 2
+        projected_top = (focal_length * rotated_top[1] / rotated_top[2] if rotated_top[2] != 0 else rotated_top[
+            1]) + HEIGHT // 2
+        projected_bottom = (focal_length * rotated_bottom[1] / rotated_bottom[2] if rotated_bottom[2] != 0 else
+                            rotated_bottom[1]) + HEIGHT // 2
 
-        # Calculate width of the ellipse
+        # Calculate width and height of the ellipse
         width = abs(projected_right - projected_left)
+        height = abs(projected_bottom - projected_top)
 
-        projected_position = focal_length * (rotated_position / z) if z != 0 else rotated_position
-        projected_position = projected_position.astype(int)
-        xp, yp = projected_position[0] + WIDTH // 2, projected_position[1] + HEIGHT // 2
+        projected_position = np.array([projected_left + width / 2, projected_top + height / 2], dtype=int)
 
-        if z < self.radius:  # The ball intersects with the photo plate
-            # semi-minor axis 'b' = sqrt(a^2 - c^2)
-            semi_minor_axis = np.sqrt(self.radius ** 2 - z ** 2)
-            # Calculate height of the ellipse
-            height = int(2 * semi_minor_axis * focal_length / abs(z))
-        else:  # The ball is entirely in front of the photo plate
-            dx = xp - WIDTH // 2
-            dy = yp - HEIGHT // 2
-            dist = np.sqrt(dx ** 2 + dy ** 2)
-            distortion_factor = 1 - dist / (np.sqrt((WIDTH // 2) ** 2 + (HEIGHT // 2) ** 2))
-            height = int(distortion_factor * width)
-
-        return (xp, yp, width, height)
+        return (*projected_position, width, height)
 
 
 # Generate balls
