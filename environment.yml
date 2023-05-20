@@ -17,4 +17,6 @@ dependencies:
   - wheel=0.38.4=py310hecd8cb5_0
   - xz=5.4.2=h6c40b1e_0
   - zlib=1.2.13=h4dc903c_0
+  - pip:
+      - pygame==2.4.0
 prefix: /Users/m31/Projects/ai/algae_01/env
