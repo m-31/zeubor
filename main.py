@@ -38,7 +38,7 @@ class Ball:
         if z < -self.radius:
             return None
 
-        if z < 0:   # FIXME If the ball is partially behind the plane, it is not calculated correctly
+        if z < self.radius:   # FIXME If the ball is partially behind the plane, it is not calculated correctly
             return None
 
         # Compute the intersection point (or the center of the ball if it does not intersect the plane)
@@ -52,16 +52,19 @@ class Ball:
             intersection_point = rotated_position + d * camera_direction
             r = np.sqrt(self.radius ** 2 - d ** 2)
 
-        # Project the circle cross-section to the plane
-        projected_radius_x = focal_length * r / abs(intersection_point[2]) if intersection_point[2] != 0 else r
-        projected_radius_y = focal_length * r / abs(intersection_point[2]) if intersection_point[2] != 0 else r
+        # Find the x and y coordinates on the camera plane
+        x = intersection_point[0] / intersection_point[2] * focal_length
+        y = intersection_point[1] / intersection_point[2] * focal_length
 
-        xp = (focal_length * intersection_point[0] / abs(intersection_point[2]) if intersection_point[2] != 0 else
-              intersection_point[0]) + WIDTH // 2
-        yp = (focal_length * intersection_point[1] / abs(intersection_point[2]) if intersection_point[2] != 0 else
-              intersection_point[1]) + HEIGHT // 2
+        # Calculate the projected width and height
+        width = 2 * ((r * focal_length) / np.sqrt(intersection_point[2] ** 2 + (r) ** 2))
+        height = 2 * ((r * focal_length) / np.sqrt(intersection_point[2] ** 2 + (r) ** 2))
 
-        return (int(xp), int(yp), abs(projected_radius_x), abs(projected_radius_y))
+        # Translate x and y to screen coordinates
+        xp = int(x) + WIDTH // 2
+        yp = int(y) + HEIGHT // 2
+
+        return (xp, yp, width, height)
 
 
 # Generate balls
