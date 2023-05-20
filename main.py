@@ -9,6 +9,7 @@ WIDTH, HEIGHT = 1500, 1000
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
+
 def rotation_matrix_from_vectors(vec1, vec2):
     """Find the rotation matrix that aligns vec1 to vec2."""
     a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
@@ -20,6 +21,7 @@ def rotation_matrix_from_vectors(vec1, vec2):
     kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
     rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2 + 1e-10))
     return rotation_matrix
+
 
 class Ball:
     def __init__(self):
@@ -38,7 +40,7 @@ class Ball:
         if z < -self.radius:
             return None
 
-        if z < self.radius:   # FIXME If the ball is partially behind the plane, it is not calculated correctly
+        if z < self.radius:  # FIXME If the ball is partially behind the plane, it is not calculated correctly
             return None
 
         # Compute the intersection point (or the center of the ball if it does not intersect the plane)
@@ -71,7 +73,7 @@ class Ball:
 balls = [Ball() for _ in range(100)]  # 100 balls
 
 # Camera settings
-camera_position = np.array([0.0, 0.0, -20])
+camera_position = np.array([0.0, 0.0, -20.0])
 camera_direction = np.array([0.0, 0.0, 1.0])  # Pointing towards positive z-axis
 focal_length = 200
 
