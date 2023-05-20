@@ -29,27 +29,38 @@ class Ball:
     def project(self, camera_position, camera_direction, focal_length):
         """Project the 3D position onto 2D plane."""
         rotation_matrix = rotation_matrix_from_vectors(np.array([0, 0, 1]), camera_direction)
+
+        # Project center
         rotated_position = rotation_matrix.dot(self.position - camera_position)
         z = rotated_position[2]
-
-        if z < -self.radius:
-            # The ball is entirely behind the photo plate
+        if z < -self.radius:  # The ball is entirely behind the photo plate
             return None
-
-        if z < self.radius:
-            # The ball intersects with the photo plate
+        if z < self.radius:  # The ball intersects with the photo plate
             intersection_radius = np.sqrt(self.radius ** 2 - z ** 2)
             projected_radius = int(intersection_radius * focal_length / abs(z))
-        else:
-            # The ball is entirely in front of the photo plate
+        else:  # The ball is entirely in front of the photo plate
             projected_radius = int(self.radius * focal_length / abs(z))
 
         projected_position = focal_length * (rotated_position / z) if z != 0 else rotated_position
         projected_position = projected_position.astype(int)
-
         xp, yp = projected_position[0] + WIDTH // 2, projected_position[1] + HEIGHT // 2
 
-        return (xp, yp, projected_radius)
+        # Project left and right extremes
+        rotated_left = rotation_matrix.dot((self.position - np.array([self.radius, 0, 0])) - camera_position)
+        rotated_right = rotation_matrix.dot((self.position + np.array([self.radius, 0, 0])) - camera_position)
+        projected_left = (focal_length * rotated_left[0] / rotated_left[2] if rotated_left[2] != 0 else rotated_left[
+            0]) + WIDTH // 2
+        projected_right = (focal_length * rotated_right[0] / rotated_right[2] if rotated_right[2] != 0 else
+                           rotated_right[0]) + WIDTH // 2
+
+        # Calculate width of the ellipse
+        width = abs(projected_right - projected_left)
+
+        # Calculate height of the ellipse (same as diameter for now)
+        height = 2 * projected_radius
+
+        return (xp, yp, width, height)
+
 
 # Generate balls
 balls = [Ball() for _ in range(100)]  # 100 balls
@@ -76,7 +87,9 @@ while running:
         number += 1
         projection = ball.project(camera_position, camera_direction, focal_length)
         if projection is not None:
-            pygame.draw.circle(screen, (255, 255, 255 - 1 * number), (projection[0], projection[1]), projection[2])
+            pygame.draw.ellipse(screen, (255, 255, 255),
+                                pygame.Rect(projection[0] - projection[2] // 2, projection[1] - projection[3] // 2,
+                                            projection[2], projection[3]))
         else:
             print("Ball " + str(number) + " is too far away or too close to the camera.")
 
