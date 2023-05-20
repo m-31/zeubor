@@ -1,5 +1,4 @@
 import pygame
-import numpy as np
 
 from alga import Alga
 from camera import Camera
@@ -16,14 +15,14 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 algae = [Alga() for _ in range(100)]
 
 # Camera settings
-game_camera = Camera([0.0, 0.0, -20.0],
-                     [0.0, 0.0, 1.0],  # Pointing towards positive z-axis
+game_camera = Camera([0.0, 0.0, -200.0],
+                     [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0],  # Pointing towards positive z-axis
                      WIDTH, HEIGHT,
-                     200)
+                     2000)
 
 # Animation settings
-step_width = 0.05  # Distance the camera moves each step
-step_angle = 0.01   # Angle the camera rotates when pressing a key
+step_width = 0.10  # Distance the camera moves each step
+step_angle = 0.01  # Angle the camera rotates when pressing a key
 
 clock = pygame.time.Clock()  # Clock to control frame rate
 
@@ -65,7 +64,9 @@ while running:
         game_camera.rotate_vertical(step_angle)
 
     # Move camera
-    game_camera.position += step_width * game_camera.direction / np.linalg.norm(game_camera.direction)
+    game_camera.move_in_direction(step_width)
+
+    print(game_camera.position, game_camera.z)
 
     # Control frame rate
     clock.tick(50)  # Max 50 frames per second

@@ -17,7 +17,7 @@ def rotation_matrix_from_vectors(vec1, vec2):
 def project(position, radius, camera):
     """Project the 3D sphere with position and radius onto 2D the camara plane given by position and direction by
     using the given focal length."""
-    rotation_matrix = rotation_matrix_from_vectors(np.array([0, 0, 1]), camera.direction)
+    rotation_matrix = rotation_matrix_from_vectors(np.array([0, 0, 1]), camera.z)
 
     # Project center
     rotated_position = rotation_matrix.dot(position - camera.position)
@@ -50,7 +50,7 @@ def project(position, radius, camera):
     height = 2 * ((r * camera.focal_length) / np.sqrt(intersection_point[2] ** 2 + (r) ** 2))
 
     # Translate x and y to screen coordinates
-    xp = int(x) + camera.width // 2
+    xp = int(x) + camera.width // 2  # FIXME: ValueError: cannot convert float NaN to integer
     yp = int(y) + camera.height // 2
 
     return xp, yp, width, height
