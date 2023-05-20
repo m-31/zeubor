@@ -2,7 +2,6 @@ import pygame
 
 from alga import Alga
 from camera import Camera
-from projections import project
 
 # Dimensions
 WIDTH, HEIGHT = 1500, 1000
