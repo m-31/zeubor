@@ -49,13 +49,8 @@ class Camera:
         projected_x = self.focal_length * (camera_coords_position[0] / camera_coords_position[2])
         projected_y = self.focal_length * (camera_coords_position[1] / camera_coords_position[2])
 
-        # Calculate the sphere's edge position in 3D space (We add the sphere radius to the z coordinate of the sphere's center)
-        edge_position = np.array(
-            [camera_coords_position[0], camera_coords_position[1], camera_coords_position[2] + sphere_radius])
-
-        # Project the edge position onto the 2D plane
-        # projected_radius = self.focal_length * (edge_position[0] / edge_position[2]) - projected_x
-        projected_radius = self.focal_length * (edge_position[0] / edge_position[2]) - projected_x
+        # Calculate the projected radius of the sphere using the formula discussed above
+        projected_radius = (self.focal_length / camera_coords_position[2]) * sphere_radius
 
         # The final 2D coordinates of the sphere's center and its radius
         return (projected_x + self.width / 2, projected_y + self.height / 2), abs(projected_radius)
