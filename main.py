@@ -38,6 +38,9 @@ class Ball:
         if z < -self.radius:
             return None
 
+        if z < 0:   # FIXME If the ball is partially behind the plane, it is not calculated correctly
+            return None
+
         # Compute the intersection point (or the center of the ball if it does not intersect the plane)
         if z >= self.radius:
             # If the ball is in front of the plane
