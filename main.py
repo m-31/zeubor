@@ -9,17 +9,30 @@ WIDTH, HEIGHT = 2000, 1200
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
+
+def rotation_matrix_from_vectors(vec1, vec2):
+    """Find the rotation matrix that aligns vec1 to vec2."""
+    a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
+    v = np.cross(a, b)
+    c = np.dot(a, b)
+    s = np.linalg.norm(v)
+    kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
+    return rotation_matrix
+
+
 class Ball:
     def __init__(self):
         self.position = np.array([random.uniform(-10, 10) for i in range(3)])
-        self.radius = random.uniform(0.1, 1)
+        self.radius = random.uniform(1, 20)
 
-    def project(self, camera_position, focal_length):
+    def project(self, camera_position, camera_direction, focal_length):
         """Project the 3D position onto 2D plane."""
-        diff = self.position - camera_position
-        z = diff[2]
+        rotation_matrix = rotation_matrix_from_vectors(np.array([0, 0, -1]), camera_direction)
+        rotated_position = rotation_matrix.dot(self.position - camera_position)
+        z = rotated_position[2]
         projected_radius = int(self.radius * focal_length / abs(z))
-        projected_position = focal_length * (diff / z) if z != 0 else diff
+        projected_position = focal_length * (rotated_position / z) if z != 0 else rotated_position
         projected_position = projected_position.astype(int)
 
         xp, yp = projected_position[0] + WIDTH // 2, projected_position[1] + HEIGHT // 2
@@ -33,15 +46,16 @@ class Ball:
             return None
 
         # Return position and size
-        return xp, yp, projected_radius
+        return (xp, yp, projected_radius)
 
-
-# Generate balls
-balls = [Ball() for _ in range(1000)]  # 100 balls
 
 # Camera settings
 camera_position = np.array([0, 0, -20])
+camera_direction = np.array([0, 0, 1])  # Pointing towards positive z-axis
 focal_length = 200
+
+# Generate balls
+balls = [Ball() for _ in range(100)]  # 100 balls
 
 # Game loop
 running = True
@@ -52,7 +66,7 @@ while running:
 
     screen.fill((0, 0, 0))
     for ball in balls:
-        projection = ball.project(camera_position, focal_length)
+        projection = ball.project(camera_position, camera_direction, focal_length)
         if projection is not None:
             pygame.draw.circle(screen, (255, 255, 255), (projection[0], projection[1]), projection[2])
 
