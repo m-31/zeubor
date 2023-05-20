@@ -1,6 +1,9 @@
 import pygame
 import numpy as np
-import random
+
+from alga import Alga
+from camera import Camera
+from projections import project
 
 # Dimensions
 WIDTH, HEIGHT = 1500, 1000
@@ -9,101 +12,52 @@ WIDTH, HEIGHT = 1500, 1000
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-
-def rotation_matrix_from_vectors(vec1, vec2):
-    """Find the rotation matrix that aligns vec1 to vec2."""
-    a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
-    v = np.cross(a, b)
-    c = np.dot(a, b)
-    s = np.linalg.norm(v)
-    if s < 1e-10:  # vectors are parallel
-        return np.eye(3) if c > 0 else -np.eye(3)
-    kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
-    rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2 + 1e-10))
-    return rotation_matrix
-
-
-class Ball:
-    def __init__(self):
-        self.position = np.array([random.uniform(-10, 10) for i in range(3)])
-        self.radius = random.uniform(1.0, 1.1)
-
-    def project(self, camera_position, camera_direction, focal_length):
-        """Project the 3D position onto 2D plane."""
-        rotation_matrix = rotation_matrix_from_vectors(np.array([0, 0, 1]), camera_direction)
-
-        # Project center
-        rotated_position = rotation_matrix.dot(self.position - camera_position)
-        z = rotated_position[2]
-
-        # If the ball is entirely behind the plane, return None
-        if z < -self.radius:
-            return None
-
-        if z < self.radius:  # FIXME If the ball is partially behind the plane, it is not calculated correctly
-            return None
-
-        # Compute the intersection point (or the center of the ball if it does not intersect the plane)
-        if z >= self.radius:
-            # If the ball is in front of the plane
-            intersection_point = rotated_position
-            r = self.radius
-        else:
-            # If the ball intersects the plane
-            d = z
-            intersection_point = rotated_position + d * camera_direction
-            r = np.sqrt(self.radius ** 2 - d ** 2)
-
-        # Find the x and y coordinates on the camera plane
-        x = intersection_point[0] / intersection_point[2] * focal_length
-        y = intersection_point[1] / intersection_point[2] * focal_length
-
-        # Calculate the projected width and height
-        width = 2 * ((r * focal_length) / np.sqrt(intersection_point[2] ** 2 + (r) ** 2))
-        height = 2 * ((r * focal_length) / np.sqrt(intersection_point[2] ** 2 + (r) ** 2))
-
-        # Translate x and y to screen coordinates
-        xp = int(x) + WIDTH // 2
-        yp = int(y) + HEIGHT // 2
-
-        return (xp, yp, width, height)
-
-
-# Generate balls
-balls = [Ball() for _ in range(100)]  # 100 balls
+# Generate algae field
+algae = [Alga() for _ in range(100)]
 
 # Camera settings
-camera_position = np.array([0.0, 0.0, -20.0])
-camera_direction = np.array([0.0, 0.0, 1.0])  # Pointing towards positive z-axis
-focal_length = 200
+game_camera = Camera([0.0, 0.0, -20.0],
+                     [0.0, 0.0, 1.0],  # Pointing towards positive z-axis
+                     WIDTH, HEIGHT,
+                     200)
 
 # Animation settings
-step_width = 0.01  # Distance the camera moves each step
+step_width = 0.05  # Distance the camera moves each step
+step_angle = 0.01   # Angle the camera rotates when pressing a key
+
 clock = pygame.time.Clock()  # Clock to control frame rate
 
 # Game loop
 running = True
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                game_camera.rotate_horizontal(-step_angle)
+            elif event.key == pygame.K_RIGHT:
+                game_camera.rotate_horizontal(step_angle)
+            elif event.key == pygame.K_UP:
+                game_camera.rotate_vertical(-step_angle)
+            elif event.key == pygame.K_DOWN:
+                game_camera.rotate_vertical(step_angle)
 
     screen.fill((0, 0, 0))
     number = 0
-    for ball in balls:
+    for alga in algae:
         number += 1
-        projection = ball.project(camera_position, camera_direction, focal_length)
+        projection = project(alga.position, alga.radius, game_camera)
         if projection is not None:
-            pygame.draw.ellipse(screen, (255, 255, 255),
+            pygame.draw.ellipse(screen, (0, 255, 0),
                                 pygame.Rect(projection[0] - projection[2] // 2, projection[1] - projection[3] // 2,
                                             projection[2], projection[3]))
-        else:
-            print("Ball " + str(number) + " is too far away or too close to the camera.")
 
     pygame.display.flip()
 
     # Move camera
-    camera_position += step_width * camera_direction / np.linalg.norm(camera_direction)
+    game_camera.position += step_width * game_camera.direction / np.linalg.norm(game_camera.direction)
 
     # Control frame rate
     clock.tick(50)  # Max 50 frames per second
