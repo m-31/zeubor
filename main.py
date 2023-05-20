@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 # Dimensions
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 2000, 1200
 
 # Initialize Pygame
 pygame.init()
