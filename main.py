@@ -55,9 +55,13 @@ class Ball:
 balls = [Ball() for _ in range(100)]  # 100 balls
 
 # Camera settings
-camera_position = np.array([0, 0, -20])
-camera_direction = np.array([0, 0, 1])  # Pointing towards positive z-axis
+camera_position = np.array([0.0, 0.0, -20])
+camera_direction = np.array([0.0, 0.0, 1.0])  # Pointing towards positive z-axis
 focal_length = 200
+
+# Animation settings
+step_width = 0.01  # Distance the camera moves each step
+clock = pygame.time.Clock()  # Clock to control frame rate
 
 # Game loop
 running = True
@@ -77,5 +81,11 @@ while running:
             print("Ball " + str(number) + " is too far away or too close to the camera.")
 
     pygame.display.flip()
+
+    # Move camera
+    camera_position += step_width * camera_direction / np.linalg.norm(camera_direction)
+
+    # Control frame rate
+    clock.tick(50)  # Max 50 frames per second
 
 pygame.quit()
