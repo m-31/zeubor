@@ -30,19 +30,17 @@ clock = pygame.time.Clock()  # Clock to control frame rate
 # Game loop
 running = True
 
+# Dictionary to keep track of key states
+key_states = {}
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                game_camera.rotate_horizontal(-step_angle)
-            elif event.key == pygame.K_RIGHT:
-                game_camera.rotate_horizontal(step_angle)
-            elif event.key == pygame.K_UP:
-                game_camera.rotate_vertical(-step_angle)
-            elif event.key == pygame.K_DOWN:
-                game_camera.rotate_vertical(step_angle)
+            key_states[event.key] = True
+        elif event.type == pygame.KEYUP:
+            key_states[event.key] = False
 
     screen.fill((0, 0, 0))
     number = 0
@@ -55,6 +53,16 @@ while running:
                                             projection[2], projection[3]))
 
     pygame.display.flip()
+
+    # Rotate camera based on key states
+    if key_states.get(pygame.K_LEFT):
+        game_camera.rotate_horizontal(-step_angle)
+    if key_states.get(pygame.K_RIGHT):
+        game_camera.rotate_horizontal(step_angle)
+    if key_states.get(pygame.K_UP):
+        game_camera.rotate_vertical(-step_angle)
+    if key_states.get(pygame.K_DOWN):
+        game_camera.rotate_vertical(step_angle)
 
     # Move camera
     game_camera.position += step_width * game_camera.direction / np.linalg.norm(game_camera.direction)
