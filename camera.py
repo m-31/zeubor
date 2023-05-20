@@ -33,6 +33,32 @@ class Camera:
         self.position += step * self.z
         self.check()
 
+    def project_sphere(self, sphere_position, sphere_radius):
+        # Step 1: Translate the point
+        translated_position = np.array(sphere_position) - self.position
+
+        # Step 2: Convert to the camera's coordinate system
+        camera_coords_position = self.get_rotation_matrix().T @ translated_position
+
+        # Check if the sphere is behind the camera
+        if camera_coords_position[2] <= 0:
+            return None
+
+        # Step 3: Perform the perspective projection transformation
+        # We perform the division only for the x and y coordinates
+        projected_x = self.focal_length * (camera_coords_position[0] / camera_coords_position[2])
+        projected_y = self.focal_length * (camera_coords_position[1] / camera_coords_position[2])
+
+        # Calculate the sphere's edge position in 3D space (We add the sphere radius to the z coordinate of the sphere's center)
+        edge_position = np.array(
+            [camera_coords_position[0], camera_coords_position[1], camera_coords_position[2] + sphere_radius])
+
+        # Project the edge position onto the 2D plane
+        # projected_radius = self.focal_length * (edge_position[0] / edge_position[2]) - projected_x
+        projected_radius = self.focal_length * (edge_position[0] / edge_position[2]) - projected_x
+
+        # The final 2D coordinates of the sphere's center and its radius
+        return (projected_x + self.width / 2, projected_y + self.height / 2), abs(projected_radius)
 
     def check(self):
         """Check if x, y, z are orthogonal."""

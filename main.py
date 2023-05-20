@@ -6,6 +6,7 @@ from projections import project
 
 # Dimensions
 WIDTH, HEIGHT = 1500, 1000
+FOCAL_LENGTH = 1000
 
 # Initialize Pygame
 pygame.init()
@@ -15,20 +16,20 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 algae = [Alga() for _ in range(100)]
 
 # Camera settings
-# game_camera = Camera([0.0, 0.0, -200.0],
-#                      [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0],  # Pointing towards positive z-axis
-#                      WIDTH, HEIGHT,
-#                      2000)
+game_camera = Camera([0.0, 0.0, -200.0],
+                     [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0],  # Pointing towards positive z-axis
+                     WIDTH, HEIGHT,
+                     FOCAL_LENGTH)
 
 # game_camera = Camera([0.0, -200.0, 0.0],
 #                      [0.0, 0.0, 1.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0],  # Pointing towards positive y-axis
 #                      WIDTH, HEIGHT,
 #                      2000)
 
-game_camera = Camera([-200.0, 0.0, 0.0],
-                     [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0],  # Pointing towards positive x-axis
-                     WIDTH, HEIGHT,
-                     2000)
+# game_camera = Camera([-200.0, 0.0, 0.0],
+#                      [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0],  # Pointing towards positive x-axis
+#                      WIDTH, HEIGHT,
+#                      2000)
 
 
 # Animation settings
@@ -53,14 +54,15 @@ while running:
             key_states[event.key] = False
 
     screen.fill((0, 0, 0))
-    number = 0
     for alga in algae:
-        number += 1
-        projection = project(alga.position, alga.radius, game_camera)
+        # projection = project(alga.position, alga.radius, game_camera)
+        # if projection is not None:
+        #     pygame.draw.ellipse(screen, (0, 255, 0),
+        #                         pygame.Rect(projection[0] - projection[2] // 2, projection[1] - projection[3] // 2,
+        #                                     projection[2], projection[3]))
+        projection = game_camera.project_sphere(alga.position, alga.radius)
         if projection is not None:
-            pygame.draw.ellipse(screen, (0, 255, 0),
-                                pygame.Rect(projection[0] - projection[2] // 2, projection[1] - projection[3] // 2,
-                                            projection[2], projection[3]))
+            pygame.draw.circle(screen, (0, 255, 0), projection[0], projection[1] + 1)
 
     pygame.display.flip()
 
