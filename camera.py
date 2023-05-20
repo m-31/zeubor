@@ -26,6 +26,9 @@ class Camera:
         self.rotate(angle, self.y, self.z)
         self.check()
 
+    def get_rotation_matrix(self):
+        return np.column_stack((self.x, self.y, self.z))
+
     def move_in_direction(self, step):
         self.position += step * self.z
         self.check()

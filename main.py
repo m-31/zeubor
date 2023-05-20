@@ -15,10 +15,21 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 algae = [Alga() for _ in range(100)]
 
 # Camera settings
-game_camera = Camera([0.0, 0.0, -200.0],
-                     [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0],  # Pointing towards positive z-axis
+# game_camera = Camera([0.0, 0.0, -200.0],
+#                      [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0],  # Pointing towards positive z-axis
+#                      WIDTH, HEIGHT,
+#                      2000)
+
+# game_camera = Camera([0.0, -200.0, 0.0],
+#                      [0.0, 0.0, 1.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0],  # Pointing towards positive y-axis
+#                      WIDTH, HEIGHT,
+#                      2000)
+
+game_camera = Camera([-200.0, 0.0, 0.0],
+                     [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0],  # Pointing towards positive x-axis
                      WIDTH, HEIGHT,
                      2000)
+
 
 # Animation settings
 step_width = 0.10  # Distance the camera moves each step
