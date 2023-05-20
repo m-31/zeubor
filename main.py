@@ -28,24 +28,27 @@ class Ball:
 
     def project(self, camera_position, camera_direction, focal_length):
         """Project the 3D position onto 2D plane."""
-        rotation_matrix = rotation_matrix_from_vectors(np.array([0, 0, -1]), camera_direction)
+        rotation_matrix = rotation_matrix_from_vectors(np.array([0, 0, 1]), camera_direction)
         rotated_position = rotation_matrix.dot(self.position - camera_position)
         z = rotated_position[2]
-        projected_radius = int(self.radius * focal_length / abs(z))
+
+        if z < -self.radius:
+            # The ball is entirely behind the photo plate
+            return None
+
+        if z < self.radius:
+            # The ball intersects with the photo plate
+            intersection_radius = np.sqrt(self.radius ** 2 - z ** 2)
+            projected_radius = int(intersection_radius * focal_length / abs(z))
+        else:
+            # The ball is entirely in front of the photo plate
+            projected_radius = int(self.radius * focal_length / abs(z))
+
         projected_position = focal_length * (rotated_position / z) if z != 0 else rotated_position
         projected_position = projected_position.astype(int)
 
         xp, yp = projected_position[0] + WIDTH // 2, projected_position[1] + HEIGHT // 2
 
-        # If the ball is too close or the photo plate is completely inside the ball, cover the photo plate
-        if abs(z) < self.radius or projected_radius > np.sqrt((WIDTH // 2)**2 + (HEIGHT // 2)**2):
-            return (-WIDTH // 2, -HEIGHT // 2, max(WIDTH, HEIGHT))
-
-        # If the ball doesn't touch the photo plate at all, return None
-        # if xp + projected_radius < -WIDTH // 2 or xp - projected_radius > WIDTH // 2 or yp + projected_radius < -HEIGHT // 2 or yp - projected_radius > HEIGHT // 2:
-        #     return None
-
-        # Return position and size
         return (xp, yp, projected_radius)
 
 # Generate balls
