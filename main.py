@@ -12,25 +12,32 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 class Ball:
     def __init__(self):
         self.position = np.array([random.uniform(-10, 10) for i in range(3)])
+        self.radius = random.uniform(0.1, 1)
 
     def project(self, camera_position, focal_length):
         """Project the 3D position onto 2D plane."""
         diff = self.position - camera_position
         z = diff[2]
-        if z < 0.1:
-            # Object is too close to the camera, return None
-            return None
-        projected_position = focal_length * (diff / z)
+        projected_radius = int(self.radius * focal_length / abs(z))
+        projected_position = focal_length * (diff / z) if z != 0 else diff
         projected_position = projected_position.astype(int)
-        # Return position (shifted to the center of the screen) and size
-        return (
-            projected_position[0] + WIDTH // 2,
-            projected_position[1] + HEIGHT // 2,
-            focal_length // z
-        )
+
+        xp, yp = projected_position[0] + WIDTH // 2, projected_position[1] + HEIGHT // 2
+
+        # If the ball is too close or the photo plate is completely inside the ball, cover the photo plate
+        if abs(z) < self.radius or projected_radius > np.sqrt((WIDTH // 2) ** 2 + (HEIGHT // 2) ** 2):
+            return (-WIDTH // 2, -HEIGHT // 2, max(WIDTH, HEIGHT))
+
+        # If the ball doesn't touch the photo plate at all, return None
+        if xp + projected_radius < -WIDTH // 2 or xp - projected_radius > WIDTH // 2 or yp + projected_radius < -HEIGHT // 2 or yp - projected_radius > HEIGHT // 2:
+            return None
+
+        # Return position and size
+        return xp, yp, projected_radius
+
 
 # Generate balls
-balls = [Ball() for _ in range(100)]  # 100 balls
+balls = [Ball() for _ in range(1000)]  # 100 balls
 
 # Camera settings
 camera_position = np.array([0, 0, -20])
