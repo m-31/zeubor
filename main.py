@@ -5,30 +5,20 @@ from camera import Camera
 
 # Dimensions
 WIDTH, HEIGHT = 1500, 1000
-FOCAL_LENGTH = 1000
+FOCAL_LENGTH = 2000
 
 # Initialize Pygame
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 # Generate algae field
-algae = [Alga() for _ in range(100)]
+algae = [Alga(FOCAL_LENGTH) for _ in range(1000)]
 
 # Camera settings
-game_camera = Camera([0.0, 0.0, -200.0],
+game_camera = Camera([0.0, 0.0, -FOCAL_LENGTH / 10.0],
                      [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0],  # Pointing towards positive z-axis
                      WIDTH, HEIGHT,
                      FOCAL_LENGTH)
-
-# game_camera = Camera([0.0, -200.0, 0.0],
-#                      [0.0, 0.0, 1.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0],  # Pointing towards positive y-axis
-#                      WIDTH, HEIGHT,
-#                      2000)
-
-# game_camera = Camera([-200.0, 0.0, 0.0],
-#                      [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0],  # Pointing towards positive x-axis
-#                      WIDTH, HEIGHT,
-#                      2000)
 
 
 # Animation settings
