@@ -39,14 +39,16 @@ def introduction():
     # print instructions on screen
     screen.fill((0, 0, 0))
     font = pygame.font.SysFont("Arial", 20)
-    text = font.render("Use arrow keys to move the camera", True, (255, 255, 255))
+    text = font.render("Use arrow keys to move the camera angle", True, (255, 255, 255))
     screen.blit(text, (10, 10))
-    text = font.render("Press <space> to stop or start movement", True, (255, 255, 255))
+    text = font.render("Use left or right arrow key with <SHIFT> to rotate the camera", True, (255, 255, 255))
     screen.blit(text, (10, 40))
-    text = font.render("Press <i> or <h> for this instructions", True, (255, 255, 255))
+    text = font.render("Press <space> to stop or start movement", True, (255, 255, 255))
     screen.blit(text, (10, 70))
+    text = font.render("Press <i> or <h> for this instructions", True, (255, 255, 255))
+    screen.blit(text, (10, 100))
     text = font.render("Press <space> to start", True, (255, 0, 0))
-    screen.blit(text, (10, 120))
+    screen.blit(text, (10, 150))
     draw_algae()
     pygame.display.flip()
     while running:
@@ -86,16 +88,17 @@ def game():
                 key_states[event.key] = False
                 shift_down = False
 
-            if key_states.get(pygame.K_i) or key_states.get(pygame.K_h):
-                running = introduction()
-                key_states = {}
-                shift_down = False
-                continue
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if step_width > 0:
                     step_width = 0
                 else:
                     step_width = STEP_WIDTH
+
+        if key_states.get(pygame.K_i) or key_states.get(pygame.K_h):
+            running = introduction()
+            key_states = {}
+            shift_down = False
+            continue
 
         screen.fill((0, 0, 0))
         draw_algae()
