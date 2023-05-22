@@ -70,53 +70,52 @@ def game():
 
     # Dictionary to keep track of key states
     key_states = {}
+    shift_down = False  # Flag to track state of Shift key
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                break
+            elif event.type == pygame.KEYDOWN:
+                key_states[event.key] = True
+                mods = pygame.key.get_mods()
+                if mods & pygame.KMOD_SHIFT:
+                    shift_down = True
+            elif event.type == pygame.KEYUP:
+                key_states[event.key] = False
+                shift_down = False
+
+            if key_states.get(pygame.K_i) or key_states.get(pygame.K_h):
+                running = introduction()
+                key_states = {}
+                shift_down = False
+                continue
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if step_width > 0:
                     step_width = 0
                 else:
                     step_width = STEP_WIDTH
-            elif event.type == pygame.KEYDOWN and (event.key == pygame.K_i or event.key == pygame.K_h):
-                introduction()
-            elif event.type == pygame.KEYDOWN:
-                mods = pygame.key.get_mods()
-                if mods & pygame.KMOD_SHIFT:
-                    key_states[str(event.key) + "B"] = True
-                else:
-                    key_states[event.key] = True
-            elif event.type == pygame.KEYUP:
-                mods = pygame.key.get_mods()
-                if mods & pygame.KMOD_SHIFT:
-                    key_states[str(event.key) + "B"] = False
-                else:
-                    key_states[event.key] = False
 
         screen.fill((0, 0, 0))
         draw_algae()
         pygame.display.flip()
 
-        # Rotate camera based on key states
-        if key_states.get(pygame.K_LEFT):
+        if key_states.get(pygame.K_LEFT) and not shift_down:
             game_camera.rotate_horizontal(-step_angle)
-        if key_states.get(pygame.K_RIGHT):
+        elif key_states.get(pygame.K_RIGHT) and not shift_down:
             game_camera.rotate_horizontal(step_angle)
-        if key_states.get(pygame.K_UP):
+        elif key_states.get(pygame.K_UP):
             game_camera.rotate_vertical(-step_angle)
-        if key_states.get(pygame.K_DOWN):
+        elif key_states.get(pygame.K_DOWN):
             game_camera.rotate_vertical(step_angle)
-        if key_states.get(str(pygame.K_LEFT) + "B"):
+        elif key_states.get(pygame.K_LEFT) and shift_down:
             game_camera.rotate_z(step_angle)
-        if key_states.get(str(pygame.K_RIGHT) + "B"):
+        elif key_states.get(pygame.K_RIGHT) and shift_down:
             game_camera.rotate_z(-step_angle)
 
         # Move camera
         game_camera.move_in_direction(step_width)
-
-        # print(game_camera.position, game_camera.z)
 
         # Control frame rate
         clock.tick(50)  # Max 50 frames per second
