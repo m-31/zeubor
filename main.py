@@ -83,9 +83,17 @@ def game():
             elif event.type == pygame.KEYDOWN and (event.key == pygame.K_i or event.key == pygame.K_h):
                 introduction()
             elif event.type == pygame.KEYDOWN:
-                key_states[event.key] = True
+                mods = pygame.key.get_mods()
+                if mods & pygame.KMOD_SHIFT:
+                    key_states[str(event.key) + "B"] = True
+                else:
+                    key_states[event.key] = True
             elif event.type == pygame.KEYUP:
-                key_states[event.key] = False
+                mods = pygame.key.get_mods()
+                if mods & pygame.KMOD_SHIFT:
+                    key_states[str(event.key) + "B"] = False
+                else:
+                    key_states[event.key] = False
 
         screen.fill((0, 0, 0))
         draw_algae()
@@ -100,6 +108,10 @@ def game():
             game_camera.rotate_vertical(-step_angle)
         if key_states.get(pygame.K_DOWN):
             game_camera.rotate_vertical(step_angle)
+        if key_states.get(str(pygame.K_LEFT) + "B"):
+            game_camera.rotate_z(step_angle)
+        if key_states.get(str(pygame.K_RIGHT) + "B"):
+            game_camera.rotate_z(-step_angle)
 
         # Move camera
         game_camera.move_in_direction(step_width)

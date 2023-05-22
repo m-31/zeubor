@@ -26,6 +26,10 @@ class Camera:
         self.rotate(angle, self.y, self.z)
         self.check()
 
+    def rotate_z(self, param):
+        self.rotate(param, self.x, self.y)
+        self.check()
+
     def get_rotation_matrix(self):
         return np.column_stack((self.x, self.y, self.z))
 
@@ -56,10 +60,12 @@ class Camera:
         return (projected_x + self.width / 2, projected_y + self.height / 2), abs(projected_radius)
 
     def check(self):
-        """Check if x, y, z are orthogonal."""
+        """Check if x, y, z are orthogonal and have correct length."""
+        # TODO remove this function
         assert np.linalg.norm(np.cross(self.x, self.y) - self.z) < 1e-10
         assert np.linalg.norm(np.cross(self.y, self.z) - self.x) < 1e-10
         assert np.linalg.norm(np.cross(self.z, self.x) - self.y) < 1e-10
         assert np.abs(np.linalg.norm(self.x) - 1) < 1e-10
         assert np.abs(np.linalg.norm(self.y) - 1) < 1e-10
         assert np.abs(np.linalg.norm(self.z) - 1) < 1e-10
+
