@@ -12,6 +12,7 @@ def game():
         algivore.create_image_and_detect_collision()
         image = algivore.image
         cv2.imshow('image', image)
+        algivore.analyze_image_and_set_movements()
         algivore.move()
     cv2.destroyAllWindows()
 

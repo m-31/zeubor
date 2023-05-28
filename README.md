@@ -8,6 +8,7 @@ conda create -p ./env python=3.10
 conda activate ./env
 env/bin/pip install pygame numpy
 env/bin/pip -v install opencv-python
+conda install pytorch torchvision -c pytorch
 conda env export > environment.yml
 ```
 
