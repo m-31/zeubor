@@ -61,7 +61,7 @@ class Camera:
 
     def check(self):
         """Check if x, y, z are orthogonal and have correct length."""
-        # TODO remove this function
+        # TODO remove this function when all is working
         assert np.linalg.norm(np.cross(self.x, self.y) - self.z) < 1e-10
         assert np.linalg.norm(np.cross(self.y, self.z) - self.x) < 1e-10
         assert np.linalg.norm(np.cross(self.z, self.x) - self.y) < 1e-10
