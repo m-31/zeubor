@@ -1,5 +1,6 @@
 import cv2
 from algivore import Algivore
+from trainer import Trainer
 
 
 def game():
@@ -8,6 +9,9 @@ def game():
     # Create an algivore
     algivore = Algivore()
 
+    trainer = Trainer(algivore)
+
+    trainer.train(10000)  # Train for 10000 episodes
     while cv2.waitKey(1) != ord('q'):
         algivore.create_image_and_detect_collision()
         image = algivore.image

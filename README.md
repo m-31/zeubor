@@ -14,3 +14,9 @@ conda env export > environment.yml
 
 
 https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html
+
+### list all python files without main*.py
+
+```bash
+for f in *.py; do if [[ ! $f == main* ]]; then echo "=== $f ==="; cat $f; fi; done > result.txt
+```
