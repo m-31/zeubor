@@ -1,90 +1,133 @@
 import copy
 import random
+
+import cv2
+import numpy as np
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
 
-from net import Net
+from action_space import action_space
+from algivore import Algivore
 from replay_memory import ReplayMemory, Transition
 
 
 class Trainer:
-    def __init__(self, algivore, memory_size=10000, batch_size=64, target_update=10, gamma=0.99, lr=0.01):
-        self.algivore = algivore
+    def __init__(self, net, memory_size=10000, batch_size=64, target_update=10, gamma=0.99, lr=0.01):
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
         self.target_update = target_update
         self.gamma = gamma
 
-        self.algivore.net = Net()  # Q-Network
-        self.algivore.target_net = copy.deepcopy(self.algivore.net)  # Target Network
-        self.optimizer = optim.Adam(self.algivore.net.parameters(), lr=lr)
+        self.net = net  # Q-Network
+        self.target_net = copy.deepcopy(self.net)  # Target Network
+        self.optimizer = optim.Adam(self.net.parameters(), lr=lr)
         self.criterion = nn.MSELoss()
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def select_action(self, state):
-        # Implement an epsilon-greedy strategy
         epsilon = 0.1  # Exploration rate
         if random.random() < epsilon:
-            # Explore: choose a random action
-            action = torch.tensor(
-                [random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(0, 1)])
+            # Define probabilities for each action, speed == 1 is 50 times more likely than speed == 0
+            action_probabilities = []
+            for action in action_space:
+                if action[3] == 0:
+                    action_probabilities.append(1 / (50 * 27 + 27))
+                else:
+                    action_probabilities.append(50 / (50 * 27 + 27))
+            action_index = np.random.choice(len(action_space),
+                                            p=action_probabilities)  # Random action with given probabilities
         else:
-            # Exploit: choose the action with the highest Q-value
             with torch.no_grad():
-                q_values = self.algivore.net(state)
-                action = q_values[0]
+                state = state.to(self.device)
+                q_values = self.net(state)
+                action_index = q_values.max(1)[1].item()  # Action with maximum Q-value
 
-        return action
+        return action_index
 
     def optimize_model(self):
         if len(self.memory) < self.batch_size:
-            # Not enough experiences in memory, so return
             return
 
-        # Sample a batch of experiences from memory
         transitions = self.memory.sample(self.batch_size)
-        batch = Transition(*zip(*transitions))
+        batch = Transition(*zip(*transitions))  # Unzips the transitions to Transition of batches
 
-        # Compute the current Q-value estimates
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                                batch.next_state)), device=self.device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in batch.next_state
+                                           if s is not None])
+
         state_batch = torch.cat(batch.state)
-        action_batch = torch.cat(batch.action)
-        q_values = self.algivore.net(state_batch)
-        q_values = q_values.gather(1, action_batch.unsqueeze(1))
+        action_batch = torch.tensor(batch.action, device=self.device)
+        reward_batch = torch.tensor(batch.reward, device=self.device).float()
 
-        # Compute the target Q-values
-        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), dtype=torch.bool)
-        non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
-        next_q_values = torch.zeros(self.batch_size)
-        next_q_values[non_final_mask] = self.algivore.target_net(non_final_next_states).max(1)[0].detach()
-        target_q_values = batch.reward + (self.gamma * next_q_values)
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+        # columns of actions taken
+        state_action_values = self.net(state_batch).gather(1, action_batch.unsqueeze(1))
 
-        # Compute the loss between the current and target Q-values
-        loss = F.mse_loss(q_values, target_q_values.unsqueeze(1))
+        # Compute V(s_{t+1}) for all next states.
+        next_state_values = torch.zeros(self.batch_size, device=self.device)
+        next_state_values[non_final_mask] = self.net(non_final_next_states).max(1)[0].detach()
 
-        # Update the Q-network weights
+        # Compute the expected Q values
+        expected_state_action_values = (next_state_values * self.gamma) + reward_batch
+
+        # Compute Huber loss
+        loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+
+        # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
+        for param in self.net.parameters():
+            param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
     def train(self, episodes):
         for episode in range(episodes):
+            print(f'Episode {episode}')
+            algivore = Algivore(self.net)
             self.optimizer.zero_grad()
 
-            self.algivore.create_image_and_detect_collision()
-            state = torch.from_numpy(self.algivore.image).float().unsqueeze(0)  # Add a batch dimension
-            state = state.permute(0, 3, 1, 2)  # Rearrange dimensions to: batch x channels x height x width
+            for step in range(1000):
+                # print(f'  Step {step}')
+                algivore.create_image()
+                # if cv2.waitKey(1) != ord('q'):
+                #     cv2.imshow('image', algivore.image)
+                # else:
+                #     cv2.destroyAllWindows()
+                state = torch.from_numpy(algivore.image).float().unsqueeze(0).to(self.device)  # Add a batch dimension
+                state = state.permute(0, 3, 1, 2)  # Rearrange dimensions to: batch x channels x height x width
 
-            action = self.select_action(state)
-            self.algivore.delta_x, self.algivore.delta_y, self.algivore.delta_z, self.algivore.speed = action.tolist()
-            self.algivore.move()
+                action = self.select_action(state)
 
-            next_state = torch.from_numpy(self.algivore.image).float().unsqueeze(0)  # Add a batch dimension
-            next_state = next_state.permute(0, 3, 1, 2)  # Rearrange dimensions to: batch x channels x height x width
-            reward = self.algivore.eaten  # The reward is the number of algae eaten
-            done = False  # You would need to determine when an episode is done
+                action_values = action_space[action]  # Retrieve the action from the action space
+                algivore.delta_x, algivore.delta_y, algivore.delta_z, algivore.speed = list(action_values)
+                algivore.move()
+                newly_eaten = algivore.detect_collision()
+                if newly_eaten > 0:
+                    print(f'  {step}: eaten {newly_eaten} algae')
+                # algivore.create_image()
+                if cv2.waitKey(1) != ord('q'):
+                    cv2.imshow('image', algivore.image)
+                else:
+                    cv2.destroyAllWindows()
 
-            self.memory.push(state, action, next_state, reward, done)
-            self.optimize_model()
+                next_state = torch.from_numpy(algivore.image).float().unsqueeze(0).to(
+                    self.device)  # Add a batch dimension
+                next_state = next_state.permute(0, 3, 1,
+                                                2)  # Rearrange dimensions to: batch x channels x height x width
+                reward = newly_eaten * 10  # The reward is the number of algae eaten
+                if np.linalg.norm(algivore.camera.position) > algivore.FOCAL_LENGTH / 200.0:
+                    reward -= 100  # Punish the algivore for going too far away from the origin
+                    print('  Punished for going too far away from the origin')
+                done = algivore.eaten > 10 or reward < 0 or step >= 1000 - 1
+
+                self.memory.push(state, action, next_state, reward, done)
+                self.optimize_model()
+
+                if done:
+                    print(f'  Done after {step} steps')
+                    break
 
             if episode % self.target_update == 0:  # Update the target network every TARGET_UPDATE episodes
-                self.algivore.target_net.load_state_dict(self.algivore.net.state_dict())
+                self.target_net.load_state_dict(self.net.state_dict())

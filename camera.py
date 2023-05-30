@@ -53,11 +53,15 @@ class Camera:
         projected_x = self.focal_length * (camera_coords_position[0] / camera_coords_position[2])
         projected_y = self.focal_length * (camera_coords_position[1] / camera_coords_position[2])
 
-        # Calculate the projected radius of the sphere using the formula discussed above
-        projected_radius = (self.focal_length / camera_coords_position[2]) * sphere_radius
-
         # The final 2D coordinates of the sphere's center and its radius
-        return (projected_x + self.width / 2, projected_y + self.height / 2), abs(projected_radius)
+        projected_radius = abs((self.focal_length / camera_coords_position[2]) * sphere_radius)
+        projected_center = (projected_x + self.width / 2, projected_y + self.height / 2)
+
+        # Check if the values are within the limits of a 16-bit integer
+        if (abs(projected_center[0]) > 32767 or abs(projected_center[1]) > 32767 or abs(projected_radius) > 32767):
+            return None
+
+        return projected_center, projected_radius
 
     def check(self):
         """Check if x, y, z are orthogonal and have correct length."""
