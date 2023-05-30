@@ -42,4 +42,12 @@ Exception: OpenCV(4.7.0) :-1: error: (-5:Bad argument) in function 'circle'
 
 ## TODO
 
-SAC neural net
+### normalize the input to float:
+
+- algae within the sphere around (0, 0, 0) with radius 1
+
+
+### run remotely on lambda service to use GPU
+
+
+### use SAC neural net

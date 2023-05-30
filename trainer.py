@@ -91,10 +91,6 @@ class Trainer:
             for step in range(1000):
                 # print(f'  Step {step}')
                 algivore.create_image()
-                # if cv2.waitKey(1) != ord('q'):
-                #     cv2.imshow('image', algivore.image)
-                # else:
-                #     cv2.destroyAllWindows()
                 state = torch.from_numpy(algivore.image).float().unsqueeze(0).to(self.device)  # Add a batch dimension
                 state = state.permute(0, 3, 1, 2)  # Rearrange dimensions to: batch x channels x height x width
 
@@ -106,11 +102,10 @@ class Trainer:
                 newly_eaten = algivore.detect_collision()
                 if newly_eaten > 0:
                     print(f'  {step}: eaten {newly_eaten} algae')
-                # algivore.create_image()
-                if cv2.waitKey(1) != ord('q'):
-                    cv2.imshow('image', algivore.image)
-                else:
-                    cv2.destroyAllWindows()
+                # if cv2.waitKey(1) != ord('q'):
+                #     cv2.imshow('image', algivore.image)
+                # else:
+                #     cv2.destroyAllWindows()
 
                 next_state = torch.from_numpy(algivore.image).float().unsqueeze(0).to(
                     self.device)  # Add a batch dimension
@@ -120,13 +115,13 @@ class Trainer:
                 if np.linalg.norm(algivore.camera.position) > algivore.FOCAL_LENGTH / 200.0:
                     reward -= 100  # Punish the algivore for going too far away from the origin
                     print('  Punished for going too far away from the origin')
-                done = algivore.eaten > 10 or reward < 0 or step >= 1000 - 1
+                done = reward < 0 or step >= 1000 - 1
 
                 self.memory.push(state, action, next_state, reward, done)
                 self.optimize_model()
 
                 if done:
-                    print(f'  Done after {step} steps')
+                    print(f'  Done after {step} steps, eaten {algivore.eaten} algae')
                     break
 
             if episode % self.target_update == 0:  # Update the target network every TARGET_UPDATE episodes
