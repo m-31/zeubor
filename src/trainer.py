@@ -1,29 +1,33 @@
 import copy
+import platform
 import random
+from datetime import datetime
 
-import cv2
 import numpy as np
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
 
-from action_space import action_space
-from algivore import Algivore
+from src.action_space import action_space
+from src.algivore import Algivore
 from replay_memory import ReplayMemory, Transition
 
 
 class Trainer:
     def __init__(self, net, memory_size=10000, batch_size=64, target_update=10, gamma=0.99, lr=0.01):
+        self.max_eaten = None
+        self.start_time = None
+        self.end_time = None
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
         self.target_update = target_update
         self.gamma = gamma
 
-        self.net = net  # Q-Network
-        self.target_net = copy.deepcopy(self.net)  # Target Network
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.net = net.to(self.device)  # Q-Network
+        self.target_net = copy.deepcopy(self.net).to(self.device)  # Target Network
         self.optimizer = optim.Adam(self.net.parameters(), lr=lr)
         self.criterion = nn.MSELoss()
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def select_action(self, state):
         epsilon = 0.1  # Exploration rate
@@ -82,13 +86,15 @@ class Trainer:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-    def train(self, episodes):
+    def train(self, episodes, steps=1000):
+        self.max_eaten = 0
+        self.start_time = datetime.now()
         for episode in range(episodes):
             print(f'Episode {episode}')
             algivore = Algivore(self.net)
             self.optimizer.zero_grad()
 
-            for step in range(1000):
+            for step in range(steps):
                 # print(f'  Step {step}')
                 algivore.create_image()
                 state = torch.from_numpy(algivore.image).float().unsqueeze(0).to(self.device)  # Add a batch dimension
@@ -116,13 +122,36 @@ class Trainer:
                     reward -= 100  # Punish the algivore for going too far away from the origin
                     print('  Punished for going too far away from the origin')
                 done = reward < 0 or step >= 1000 - 1
-
+ 
                 self.memory.push(state, action, next_state, reward, done)
                 self.optimize_model()
 
                 if done:
+                    self.max_eaten = max(self.max_eaten, algivore.eaten)
                     print(f'  Done after {step} steps, eaten {algivore.eaten} algae')
                     break
 
             if episode % self.target_update == 0:  # Update the target network every TARGET_UPDATE episodes
                 self.target_net.load_state_dict(self.net.state_dict())
+        self.end_time = datetime.now()
+        print()
+        print(f'Max eaten: {self.max_eaten}')
+        print('-' * 80)
+        timestamp = datetime.now().isoformat()
+        torch.save(self.net.state_dict(), f"./models/algivore_{timestamp.replace(':', '_')}.pt")  # Save the trained model
+
+        # Append information about the trained model to file algivore_info.txt
+        with open('./models/algivore_info.txt', 'a') as f:
+            f.write('-' * 80 + '\n')
+            f.write(f"{timestamp}\n")
+            f.write(f"  episodes: {episodes}\n")
+            f.write(f"  steps: {steps}\n")
+            f.write(f"  max_eaten: {self.max_eaten}\n")
+            f.write(f"  duration: {self.end_time - self.start_time}\n")
+            f.write(f"  model: algivore_{timestamp.replace(':', '_')}.pt\n")
+            f.write(f"  machine: {platform.machine()}\n")
+            f.write(f"  processor: {platform.processor()}\n")
+            f.write(f"  system: {platform.system()}\n")
+            f.write(f"  platform: {platform.platform()}\n")
+            f.write(f"  node: {platform.node()}\n")
+

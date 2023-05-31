@@ -59,12 +59,28 @@ for f in *.py; do if [[ ! $f == main* ]]; then echo "=== $f ==="; cat $f; fi; do
 
 ## TODO
 
+### write a test scenario that loads and tests a given model and calculates a score for it
+
 ### normalize the input to float:
 
 - algae within the sphere around (0, 0, 0) with radius 1
 
+### improve image creation
+
+
+### measure time for each iteration step
+
 
 ### run remotely on lambda service to use GPU
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+conda create -p ./env python=3.10
+conda activate ./env
+env/bin/pip install pygame numpy
+env/bin/pip -v install opencv-python
+conda install pytorch torchvision -c pytorch
+python world.py
 
 
 ### use SAC neural net

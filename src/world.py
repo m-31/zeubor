@@ -1,9 +1,6 @@
-from datetime import datetime
-
 import cv2
-import torch
 
-from algivore import Algivore
+from src.algivore import Algivore
 from net import Net
 from trainer import Trainer
 
@@ -15,9 +12,7 @@ def game():
     trainer = Trainer(net)
 
     # TODO: goal: trainer.train(10000)  # Train for 10000 episodes
-    trainer.train(100)  # Train for 100 episodes
-
-    torch.save(net.state_dict(), f"algivore_{datetime.now().isoformat().replace(':', '_')}.pt")  # Save the trained model
+    trainer.train(1)  # Train for 100 episodes
 
     # Create an algivore
     algivore = Algivore(net)
@@ -29,8 +24,9 @@ def game():
         cv2.imshow('image', image)
         algivore.analyze_image_and_set_movements()
         algivore.move()
-        if algivore.detect_collision() > 0:
-            print(f"Eaten {algivore.detect_collision()} algae")
+        eaten = algivore.detect_collision()
+        if eaten > 0:
+            print(f"Eaten {eaten} algae")
     cv2.destroyAllWindows()
 
 
