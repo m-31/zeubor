@@ -13,6 +13,16 @@ from src.algivore import Algivore
 from replay_memory import ReplayMemory, Transition
 
 
+def write_info(file_path, training_info, add_separator):
+    with open(file_path, 'a') as f:
+        if add_separator:
+            f.write('-' * 80 + '\n')
+        f.write(f"{training_info['timestamp']}\n")
+        for key, value in training_info.items():
+            if key != 'timestamp':
+                f.write(f"  {key}: {value}\n")
+
+
 class Trainer:
     def __init__(self, net, memory_size=10000, batch_size=64, target_update=10, gamma=0.99, lr=0.01):
         self.max_eaten = None
@@ -122,7 +132,7 @@ class Trainer:
                     reward -= 100  # Punish the algivore for going too far away from the origin
                     print('  Punished for going too far away from the origin')
                 done = reward < 0 or step >= 1000 - 1
- 
+
                 self.memory.push(state, action, next_state, reward, done)
                 self.optimize_model()
 
@@ -138,20 +148,24 @@ class Trainer:
         print(f'Max eaten: {self.max_eaten}')
         print('-' * 80)
         timestamp = datetime.now().isoformat()
-        torch.save(self.net.state_dict(), f"./models/algivore_{timestamp.replace(':', '_')}.pt")  # Save the trained model
+        model_name = f"algivore_{timestamp.replace(':', '_')}"
+        torch.save(self.net.state_dict(), f"./models/{model_name}.pt")  # Save the trained model
 
-        # Append information about the trained model to file algivore_info.txt
-        with open('./models/algivore_info.txt', 'a') as f:
-            f.write('-' * 80 + '\n')
-            f.write(f"{timestamp}\n")
-            f.write(f"  episodes: {episodes}\n")
-            f.write(f"  steps: {steps}\n")
-            f.write(f"  max_eaten: {self.max_eaten}\n")
-            f.write(f"  duration: {self.end_time - self.start_time}\n")
-            f.write(f"  model: algivore_{timestamp.replace(':', '_')}.pt\n")
-            f.write(f"  machine: {platform.machine()}\n")
-            f.write(f"  processor: {platform.processor()}\n")
-            f.write(f"  system: {platform.system()}\n")
-            f.write(f"  platform: {platform.platform()}\n")
-            f.write(f"  node: {platform.node()}\n")
+        # Information about the training
+        training_info = {
+            "timestamp": timestamp,
+            "episodes": episodes,
+            "steps": steps,
+            "max_eaten": self.max_eaten,
+            "duration": self.end_time - self.start_time,
+            "model": f"{model_name}.pt",
+            "machine": platform.machine(),
+            "processor": platform.processor(),
+            "system": platform.system(),
+            "platform": platform.platform(),
+            "node": platform.node(),
+        }
 
+        # Append information about the trained model to the respective files
+        write_info(f"./models/{model_name}.txt", training_info, False)
+        write_info('./models/algivore_info.txt', training_info, True)
