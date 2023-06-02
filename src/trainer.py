@@ -1,8 +1,9 @@
 import copy
+import json
+import os
 import platform
 import random
 from datetime import datetime
-
 import numpy as np
 import torch
 from torch import nn, optim
@@ -14,13 +15,24 @@ from replay_memory import ReplayMemory, Transition
 
 
 def write_info(file_path, training_info, add_separator):
+    _, ext = os.path.splitext(file_path)
     with open(file_path, 'a') as f:
-        if add_separator:
+        if ext == '.txt' and add_separator:
             f.write('-' * 80 + '\n')
-        f.write(f"{training_info['timestamp']}\n")
-        for key, value in training_info.items():
-            if key != 'timestamp':
-                f.write(f"  {key}: {value}\n")
+        if ext == '.json':
+            info = dict()
+            for key, value in training_info.items():
+                if type(value) in [int, float, bool, str]:
+                    info[key] = value
+                else:
+                    info[key] = str(value)
+            json.dump(info, f, indent=2)
+            f.write("\n")
+        elif ext == '.txt':
+            f.write(f"{training_info['timestamp']}\n")
+            for key, value in training_info.items():
+                if key != 'timestamp':
+                    f.write(f"  {key}: {value}\n")
 
 
 class Trainer:
@@ -152,7 +164,7 @@ class Trainer:
         torch.save(self.net.state_dict(), f"./models/{model_name}.pt")  # Save the trained model
 
         # Information about the training
-        training_info = {
+        info = {
             "timestamp": timestamp,
             "episodes": episodes,
             "steps": steps,
@@ -165,7 +177,14 @@ class Trainer:
             "platform": platform.platform(),
             "node": platform.node(),
         }
+        # setting device on GPU if available, else CPU
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        info["device"] = device
+        if device.type == 'cuda':
+            info["cuda_device"] = torch.cuda.get_device_name(0)
+            info["cuda_allocated"] = round(torch.cuda.memory_allocated(0) / 1024 ** 3, 1)  # GB
+            info["cuda_cached"] = round(torch.cuda.memory_reserved(0) / 1024 ** 3, 1)  # GB
 
         # Append information about the trained model to the respective files
-        write_info(f"./models/{model_name}.txt", training_info, False)
-        write_info('./models/algivore_info.txt', training_info, True)
+        write_info(f"./models/{model_name}.json", info, False)
+        write_info('./models/algivore_info.txt', info, True)

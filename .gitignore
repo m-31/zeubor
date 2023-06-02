@@ -1,5 +1,6 @@
 /env/
 /.idea/
+/.python-version
 /__pycache__/
 /image.png
 /result.txt
