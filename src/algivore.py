@@ -74,6 +74,7 @@ class Algivore:
             action_index = q_values.max(1)[1].item()  # Action with maximum Q-value
         action = index_to_action(action_index)  # Convert action index to action
         self.delta_x, self.delta_y, self.delta_z, self.speed = action
+        #print(f"speed: {self.speed}")
 
     def move(self):
         """Move algivore and eat algae."""
