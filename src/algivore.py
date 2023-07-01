@@ -5,7 +5,6 @@ import torch
 from action_space import index_to_action
 from alga import Alga
 from camera import Camera
-from net import Net
 
 
 class Algivore:

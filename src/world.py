@@ -12,7 +12,8 @@ def game():
     trainer = Trainer(net)
 
     # TODO: goal: trainer.train(10000)  # Train for 10000 episodes
-    trainer.train(1)  # Train for 100 episodes
+    # trainer.train(1)  # Train for 100 episodes
+    trainer.train(10000)
 
     # Create an algivore
     algivore = Algivore(net)

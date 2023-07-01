@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Camera:
     def __init__(self, position, x, y, z, width, height, focal_length):
         self.position = np.array(position)
@@ -72,4 +73,3 @@ class Camera:
         assert np.abs(np.linalg.norm(self.x) - 1) < 1e-10
         assert np.abs(np.linalg.norm(self.y) - 1) < 1e-10
         assert np.abs(np.linalg.norm(self.z) - 1) < 1e-10
-

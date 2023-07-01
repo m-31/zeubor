@@ -4,13 +4,15 @@ import os
 import platform
 import random
 from datetime import datetime
+from pathlib import Path
+
 import numpy as np
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
 
-from src.action_space import action_space
-from src.algivore import Algivore
+from action_space import action_space
+from algivore import Algivore
 from replay_memory import ReplayMemory, Transition
 
 
@@ -161,6 +163,8 @@ class Trainer:
         print('-' * 80)
         timestamp = datetime.now().isoformat()
         model_name = f"algivore_{timestamp.replace(':', '_')}"
+        # create ./models if not exists
+        Path("./models").mkdir(parents=True, exist_ok=True)
         torch.save(self.net.state_dict(), f"./models/{model_name}.pt")  # Save the trained model
 
         # Information about the training

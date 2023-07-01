@@ -3,10 +3,8 @@ import os
 import cv2
 import torch
 
-from src.algivore import Algivore
+from algivore import Algivore
 from net import Net
-from trainer import Trainer
-
 
 def game():
     """Main game loop."""
