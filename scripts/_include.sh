@@ -24,7 +24,8 @@ function read_server_properties() {
 function ssh_options() {
   echo "
        -o BatchMode=yes \
-       -o ConnectTimeout=5 \
+       -o ConnectionAttempts=3 \
+       -o ConnectTimeout=12 \
        -o PreferredAuthentications=publickey \
        -o StrictHostKeyChecking=no \
        -o UserKnownHostsFile=/dev/null \
@@ -45,6 +46,17 @@ function _scp() {
   # shellcheck disable=SC2046
   scp $(ssh_options) "$@" "${REMOTE_USER}@${REMOTE_SERVER}:"
 }
+
+## log message with time stamp
+function log() {
+  echo -e '\033[0;32m'"$(ts)" "${*}"'\033[0m'
+}
+
+## write time stamp
+function ts () {
+  date +"%Y-%m-%d %T"
+}
+
 
 # initialize variables
 read_server_properties

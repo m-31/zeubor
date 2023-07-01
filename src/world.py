@@ -10,14 +10,17 @@ def game():
 
     net = Net()
     trainer = Trainer(net)
-
+    print("Training...")
     # TODO: goal: trainer.train(10000)  # Train for 10000 episodes
-    # trainer.train(1)  # Train for 100 episodes
-    trainer.train(10000)
+    trainer.train(1)  # Train for 1 episodes
+    # trainer.train(10000)
+
+    exit(0)     # no GUI on server
 
     # Create an algivore
     algivore = Algivore(net)
 
+    print("Starting main loop...")
     # Main game loop
     while cv2.waitKey(1) != ord('q'):
         algivore.create_image()
